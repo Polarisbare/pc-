@@ -20,20 +20,22 @@
           <i class="el-icon-notebook-1"></i>
           <span>面经管理</span>
         </el-menu-item>
-
       </el-menu>
     </el-aside>
-
 
     <el-container>
       <el-header>
         <div class="user">
           <el-avatar :size="36" :src="obj.avatar"></el-avatar>
-          <el-link :underline="false">{{obj.username}}</el-link>
+          <el-link :underline="false">{{ obj.username }}</el-link>
         </div>
         <div class="logout">
-          <el-popconfirm title="您确认退出面经运营后台吗？">
-            <i slot="reference" title="logout" class="el-icon-switch-button"></i>
+          <el-popconfirm title="您确认退出面经运营后台吗？" @confirm="confirm">
+            <i
+              slot="reference"
+              title="logout"
+              class="el-icon-switch-button"
+            ></i>
           </el-popconfirm>
         </div>
       </el-header>
@@ -41,30 +43,34 @@
         <router-view></router-view>
       </el-main>
     </el-container>
-
-
   </el-container>
 </template>
 
 <script>
 export default {
-  name: 'layout-page',
-  data () {
+  name: "layout-page",
+  data() {
     return {
-      obj:{}
-    }
+      obj: {},
+    };
   },
-  async created(){
+  async created() {
     // console.log(this.$route.path);
     // 获取基本信息ajax数据
     let res = await this.$axios({
-      url:'/auth/currentUser'
-    })
+      url: "/auth/currentUser",
+    });
     // console.log(res)
-    this.obj = res.data.data
-    
-  }
-}
+    this.obj = res.data.data;
+  },
+  methods: {
+    confirm() {
+      router.push("/login");
+      // 2.清token
+      store.commit("user/set", "");
+    },
+  },
+};
 </script>
 
 <style lang="scss" scoped>
@@ -84,7 +90,8 @@ export default {
       margin-top: 20px;
       &-item {
         background-color: transparent !important;
-        > span, i {
+        > span,
+        i {
           padding-left: 5px;
         }
       }
