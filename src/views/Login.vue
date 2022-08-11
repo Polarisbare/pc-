@@ -66,7 +66,11 @@ export default {
             method:'POST',
             data:this.form
           })
-          localStorage.setItem('pc-token','Bearer '+res.data.data.token)
+          // 小项目推荐  本地化
+          // localStorage.setItem('pc-token','Bearer '+res.data.data.token)
+          // 使用vuex 把token存到数据中心封装方法
+          // 同步
+          this.$store.commit('user/set','Bearer '+res.data.data.token)
           this.$router.push('/dashboard')
         } else {
           console.log("error submit!!");
