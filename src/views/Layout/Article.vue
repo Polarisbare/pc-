@@ -42,7 +42,7 @@
             <div class="actions">
               <i class="el-icon-view" @click="show('预览')"></i>
               <i class="el-icon-edit-outline" @click="show('编辑')"></i>
-              <i class="el-icon-delete"></i>
+              <i class="el-icon-delete" @click="del(scope.row.id)"></i>
             </div>
           </template>
         </el-table-column>
@@ -135,7 +135,9 @@ export default {
       },
       rules: {
         stem: [{ required: true, message: "请输入标题名称", trigger: "blur" }],
-        content: [{ required: true, message: "请输入面经内容", trigger: "blur" }],
+        content: [
+          { required: true, message: "请输入面经内容", trigger: "blur" },
+        ],
       },
     };
   },
@@ -177,21 +179,65 @@ export default {
       this.total = res.data.data.total;
     },
     // 抽屉关闭的时候执行函数
-    handleClose(done) {
-      this.$confirm("确认关闭？")
-        .then((_) => {
-          done();
-        })
-        .catch((_) => {});
+    handleClose() {
+      //
+      // 关闭的时候清空表单内容
+      this.$refs.form.resetFields("content");
+      // 把抽屉收回
+      this.drawer = false;
     },
     // 抽屉出现
     show(str) {
       this.drawer = true;
       this.title = str;
     },
-    onSubmit() {},
-    blur(){
-      this.$refs.form.validateField('content')
+    onSubmit() {
+      this.$refs.form.validate(async (valid) => {
+        if (valid) {
+          let res = await this.$axios({
+            url: "/admin/interview/create",
+            method: "POST",
+            data: this.form,
+          });
+          // 新增成功
+          // console.log(res)
+          this.$message({
+            message: "恭喜你,新增成功",
+            type: "success",
+          });
+          // 关闭抽屉
+          this.handleClose()
+          // 重新加载列表
+          this.getlist()
+        } else {
+          console.log("error submit!!");
+          return false;
+        }
+      });
+    },
+    blur() {
+      this.$refs.form.validateField("content");
+    },
+    del(id){
+      //  获取id   scope.row.id 
+       this.$confirm("真的要删除吗")
+        .then(async(_) => {
+          await this.$axios({
+            url:'/admin/interview/remove',
+            method:'DELETE',
+            data:{id}
+          })
+          // 成功
+          this.$message({
+            message: "恭喜你,删除成功",
+            type: "success",
+          });
+          // 重新加载列表
+          this.getlist()
+          
+        })
+        .catch((_) => {});
+
     }
   },
 };
