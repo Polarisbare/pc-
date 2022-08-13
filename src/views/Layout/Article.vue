@@ -40,8 +40,11 @@
           <!-- scope.$index, scope.row) -->
           <template slot-scope="scope">
             <div class="actions">
-              <i class="el-icon-view" @click="show('预览')"></i>
-              <i class="el-icon-edit-outline" @click="show('编辑')"></i>
+              <i class="el-icon-view" @click="show('预览', scope.row.id)"></i>
+              <i
+                class="el-icon-edit-outline"
+                @click="show('编辑', scope.row.id)"
+              ></i>
               <i class="el-icon-delete" @click="del(scope.row.id)"></i>
             </div>
           </template>
@@ -67,7 +70,20 @@
       :direction="direction"
       :before-close="handleClose"
     >
-      <el-form ref="form" :model="form" label-width="80px" :rules="rules">
+      <!--预览结构 -->
+      <div v-if="title == '预览'" class="article-preview">
+        <h5>{{ form.stem }}</h5>
+        <div v-html="form.content"></div>
+      </div>
+
+      <!-- form表单 -->
+      <el-form
+        ref="form"
+        :model="form"
+        label-width="80px"
+        :rules="rules"
+        v-else
+      >
         <el-form-item label="面经标题" prop="stem">
           <el-input v-model="form.stem"></el-input>
         </el-form-item>
@@ -80,7 +96,7 @@
           <quillEditor v-model="form.content" @blur="blur"></quillEditor>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="onSubmit()">立即创建</el-button>
+          <el-button type="primary" @click="onSubmit">{{ wudi }}</el-button>
           <el-button>取消</el-button>
         </el-form-item>
       </el-form>
@@ -122,10 +138,12 @@ export default {
           address: "上海市普陀区金沙江路 1518 弄",
         },
       ],
+      wudi: "立即新增",
       current: 1,
       pageSize: 20,
       total: 0,
       title: "",
+      id: "",
       // 抽屉
       drawer: false,
       direction: "rtl",
@@ -142,6 +160,12 @@ export default {
     };
   },
   created() {
+    // if(this.title == '新增'){
+
+    // }
+    // if(this.title == '编辑'){
+
+    // }
     this.getlist();
   },
   methods: {
@@ -180,35 +204,79 @@ export default {
     },
     // 抽屉关闭的时候执行函数
     handleClose() {
-      //
-      // 关闭的时候清空表单内容
-      this.$refs.form.resetFields("content");
+      if (this.title !== "预览") {
+        // 关闭的时候清空表单内容
+        this.$refs.form.resetFields("content");
+      }
+
       // 把抽屉收回
       this.drawer = false;
+      this.form.stem = ''
+      this.form.content = ''
     },
     // 抽屉出现
-    show(str) {
+    async show(str, id) {
       this.drawer = true;
       this.title = str;
+      // 回显
+      if (str == "编辑" || str == "预览") {
+        this.wudi = "立即修改";
+        // 需要拿到文章数据（前端scope.row   ajax接口拿）
+        let res = await this.$axios({
+          url: "/admin/interview/show",
+          params: { id }, //参数是id    记住了点击编辑的时候一定要判断看看函数怎么写的去服务器请求数据编辑的是哪个传id参数就是id上面哟就直接写没有就写花括号
+        });
+
+        // 2.拿到数据回显
+        // console.log(res)
+        this.form.stem = res.data.data.stem;
+        this.form.content = res.data.data.content;
+        // 点击的时候记录id值  之后你修改完了才知道你修改的事哪个
+        this.id = res.data.data.id;
+      }
     },
     onSubmit() {
       this.$refs.form.validate(async (valid) => {
         if (valid) {
-          let res = await this.$axios({
-            url: "/admin/interview/create",
-            method: "POST",
-            data: this.form,
-          });
-          // 新增成功
-          // console.log(res)
-          this.$message({
-            message: "恭喜你,新增成功",
-            type: "success",
-          });
+          // 新增
+          
+          if (this.title == "新增") {
+            let res = await this.$axios({
+              url: "/admin/interview/create",
+              method: "POST",
+              data: this.form,
+            });
+
+            // 新增成功
+            // console.log(res)
+            this.$message({
+              message: "恭喜你,新增成功",
+              type: "success",
+            });
+          }
+          // 编辑
+          if (this.title == "编辑") {
+            // 1.数据id点击编辑的时候记录下id值
+
+            await this.$axios({
+              url: "/admin/interview/update",
+              method: "PUT",
+              data: {
+                ...this.form,
+                id: this.id,
+              },
+            });
+
+            this.$message({
+              message: "恭喜你,修改成功",
+              type: "success",
+            });
+          }
+
           // 关闭抽屉
-          this.handleClose()
+          this.handleClose();
           // 重新加载列表
-          this.getlist()
+          this.getlist();
         } else {
           console.log("error submit!!");
           return false;
@@ -218,27 +286,25 @@ export default {
     blur() {
       this.$refs.form.validateField("content");
     },
-    del(id){
-      //  获取id   scope.row.id 
-       this.$confirm("真的要删除吗")
-        .then(async(_) => {
+    del(id) {
+      //  获取id   scope.row.id
+      this.$confirm("真的要删除吗")
+        .then(async (_) => {
           await this.$axios({
-            url:'/admin/interview/remove',
-            method:'DELETE',
-            data:{id}
-          })
+            url: "/admin/interview/remove",
+            method: "DELETE",
+            data: { id },
+          });
           // 成功
           this.$message({
             message: "恭喜你,删除成功",
             type: "success",
           });
           // 重新加载列表
-          this.getlist()
-          
+          this.getlist();
         })
         .catch((_) => {});
-
-    }
+    },
   },
 };
 </script>

@@ -47,7 +47,12 @@ export default {
       rules: {
         username: [
           { required: true, message: "请输入用户名", trigger: "blur" }, //trigger   触发
-          { min: 5, max: 11, message: "长度在 5 到 11 个字符", trigger: "blur" },
+          {
+            min: 5,
+            max: 11,
+            message: "长度在 5 到 11 个字符",
+            trigger: "blur",
+          },
         ],
         password: [
           { required: true, message: "请输入正确密码", trigger: "blur" },
@@ -58,20 +63,21 @@ export default {
   },
   methods: {
     login() {
-      this.$refs.box.validate( async (valid) => {
-        if (valid) {//验证通过
+      this.$refs.box.validate(async (valid) => {
+        if (valid) {
+          //验证通过
           // 发送请求
           let res = await this.$axios({
-            url:'/auth/login',
-            method:'POST',
-            data:this.form
-          })
+            url: "/auth/login",
+            method: "POST",
+            data: this.form,
+          });
           // 小项目推荐  本地化
           // localStorage.setItem('pc-token','Bearer '+res.data.data.token)
           // 使用vuex 把token存到数据中心封装方法
           // 同步
-          this.$store.commit('user/set','Bearer '+res.data.data.token)
-          this.$router.push('/dashboard')
+          this.$store.commit("user/set", "Bearer " + res.data.data.token);
+          this.$router.push("/dashboard");
         } else {
           console.log("error submit!!");
           return false;
