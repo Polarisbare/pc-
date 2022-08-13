@@ -9,39 +9,46 @@
       <template #header>
         <div class="header">
           <span>共 300 条记录</span>
-          <el-button icon="el-icon-plus" size="small" type="primary" round>
+          <el-button
+            @click="show('新增')"
+            icon="el-icon-plus"
+            size="small"
+            type="primary"
+            round
+            
+          >
             添加面经
           </el-button>
         </div>
       </template>
-          <el-table
-      :data="tableData"
-      style="width: 100%"
-      :row-class-name="tableRowClassName"
-    >
-      <el-table-column prop="stem" label="标题" width="300"> </el-table-column>
+      <el-table
+        :data="tableData"
+        style="width: 100%"
+        :row-class-name="tableRowClassName"
+      >
+        <el-table-column prop="stem" label="标题" width="300">
+        </el-table-column>
 
-      <el-table-column prop="creator" label="作者"> </el-table-column>
+        <el-table-column prop="creator" label="作者"> </el-table-column>
 
-      <el-table-column prop="likeCount" label="点赞"> </el-table-column>
+        <el-table-column prop="likeCount" label="点赞"> </el-table-column>
 
-      <el-table-column prop="views" label="浏览数"> </el-table-column>
+        <el-table-column prop="views" label="浏览数"> </el-table-column>
 
-      <el-table-column prop="createdAt" label="更新时间"> </el-table-column>
+        <el-table-column prop="createdAt" label="更新时间"> </el-table-column>
 
-      <el-table-column prop="" label="操作">
-        <!-- scope.$index, scope.row) -->
-        <template slot-scope="scope">
-          <div class="actions">
-            <i class="el-icon-view"></i>
-            <i class="el-icon-edit-outline"></i>
-            <i class="el-icon-delete"></i>
-          </div>
-        </template>
-      </el-table-column>
-
-    </el-table>
-          <!-- 页码分页 -->
+        <el-table-column prop="" label="操作">
+          <!-- scope.$index, scope.row) -->
+          <template slot-scope="scope">
+            <div class="actions">
+              <i class="el-icon-view" @click="show('预览')"></i>
+              <i class="el-icon-edit-outline" @click="show('编辑')"></i>
+              <i class="el-icon-delete"></i>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+      <!-- 页码分页 -->
       <el-pagination
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
@@ -53,13 +60,40 @@
       >
       </el-pagination>
     </el-card>
-
-
+    <!-- 添加抽屉 -->
+    <el-drawer
+    size="70%"
+      :title="title"
+      :visible.sync="drawer"
+      :direction="direction"
+      :before-close="handleClose"
+    >
+      <el-form ref="form" :model="form" label-width="80px">
+        <el-form-item label="活动名称">
+          <el-input v-model="form.name"></el-input>
+        </el-form-item>
+        <el-form-item label="活动形式">
+          <!-- <el-input type="textarea" v-model="form.desc"></el-input> -->
+          <quillEditor></quillEditor>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="onSubmit()">立即创建</el-button>
+          <el-button>取消</el-button>
+        </el-form-item>
+      </el-form>
+    </el-drawer>
   </div>
 </template>
 
 <script>
+import 'quill/dist/quill.core.css'
+import 'quill/dist/quill.snow.css'
+import 'quill/dist/quill.bubble.css'
+import { quillEditor } from 'vue-quill-editor'
 export default {
+  components: {
+    quillEditor
+  },
   name: "article-page",
   data() {
     return {
@@ -87,12 +121,20 @@ export default {
       ],
       current: 1,
       pageSize: 20,
-      total:0
+      total: 0,
+      title: "",
+      // 抽屉
+      drawer: false,
+      direction: "rtl",
+      form: {
+        name: "",
+        desc: "",
+        
+      },
     };
   },
   created() {
-    this.getlist()
-    
+    this.getlist();
   },
   methods: {
     tableRowClassName({ row, rowIndex }) {
@@ -106,29 +148,44 @@ export default {
     handleSizeChange(val) {
       // console.log(`每页 ${val} 条`);
       // 每页多少条、
-      this.pageSize = val
-      this.getlist()
-      
+      this.pageSize = val;
+      this.getlist();
     },
     handleCurrentChange(val) {
       // console.log(`当前页: ${val}`);
       // 当前页码   点击之后要请求数据
-      this.current = val
-      this.getlist()
+      this.current = val;
+      this.getlist();
+    },
+    // 封装成函数
+    async getlist() {
+      let res = await this.$axios({
+        url: "/admin/interview/query",
+        params: {
+          current: this.current,
+          pageSize: this.pageSize,
+        },
+      });
+      this.tableData = res.data.data.rows;
+      // console.log(res.data.data)
+      this.total = res.data.data.total;
+    },
+    // 抽屉关闭的时候执行函数
+    handleClose(done) {
+      this.$confirm("确认关闭？")
+        .then((_) => {
+          done();
+        })
+        .catch((_) => {});
+    },
+    // 抽屉出现
+    show(str) {
+      this.drawer = true;
+      this.title = str;
+    },
+    onSubmit(){
 
     },
-    async getlist(){
-      let res = await this.$axios({
-      url: "/admin/interview/query",
-      params: {
-        current: this.current,
-        pageSize: this.pageSize,
-      },
-    });
-    this.tableData = res.data.data.rows;
-    // console.log(res.data.data)
-    this.total = res.data.data.total
-    }
   },
 };
 </script>
