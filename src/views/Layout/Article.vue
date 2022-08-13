@@ -15,7 +15,6 @@
             size="small"
             type="primary"
             round
-            
           >
             添加面经
           </el-button>
@@ -62,19 +61,23 @@
     </el-card>
     <!-- 添加抽屉 -->
     <el-drawer
-    size="70%"
+      size="70%"
       :title="title"
       :visible.sync="drawer"
       :direction="direction"
       :before-close="handleClose"
     >
-      <el-form ref="form" :model="form" label-width="80px">
-        <el-form-item label="活动名称">
-          <el-input v-model="form.name"></el-input>
+      <el-form ref="form" :model="form" label-width="80px" :rules="rules">
+        <el-form-item label="面经标题" prop="stem">
+          <el-input v-model="form.stem"></el-input>
         </el-form-item>
-        <el-form-item label="活动形式">
-          <!-- <el-input type="textarea" v-model="form.desc"></el-input> -->
-          <quillEditor></quillEditor>
+        <el-form-item label="面经内容" prop="content">
+          <!-- <el-input type="textarea" v-model="form.content"></el-input> -->
+          <!-- 问题：第三方组件不配合校验 -->
+          <!-- 解决：  
+                    1.查看文档quillEditor是否有失去焦点的事件
+                    2.需要调用文档的 -->
+          <quillEditor v-model="form.content" @blur="blur"></quillEditor>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="onSubmit()">立即创建</el-button>
@@ -86,13 +89,13 @@
 </template>
 
 <script>
-import 'quill/dist/quill.core.css'
-import 'quill/dist/quill.snow.css'
-import 'quill/dist/quill.bubble.css'
-import { quillEditor } from 'vue-quill-editor'
+import "quill/dist/quill.core.css";
+import "quill/dist/quill.snow.css";
+import "quill/dist/quill.bubble.css";
+import { quillEditor } from "vue-quill-editor";
 export default {
   components: {
-    quillEditor
+    quillEditor,
   },
   name: "article-page",
   data() {
@@ -127,9 +130,12 @@ export default {
       drawer: false,
       direction: "rtl",
       form: {
-        name: "",
-        desc: "",
-        
+        stem: "",
+        content: "",
+      },
+      rules: {
+        stem: [{ required: true, message: "请输入标题名称", trigger: "blur" }],
+        content: [{ required: true, message: "请输入面经内容", trigger: "blur" }],
       },
     };
   },
@@ -183,9 +189,10 @@ export default {
       this.drawer = true;
       this.title = str;
     },
-    onSubmit(){
-
-    },
+    onSubmit() {},
+    blur(){
+      this.$refs.form.validateField('content')
+    }
   },
 };
 </script>
